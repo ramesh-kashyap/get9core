@@ -1,0 +1,12 @@
+[2025-05-13T11:29:42.029Z] Error sending email to rameshkashyap8801@gmail.com:
+Error: queryA EBADNAME info@synero.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19)
+
+[2025-05-13T11:29:51.438Z] Error sending email to rameshkashyap8801@gmail.com:
+Error: queryA EBADNAME info@synero.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19)
+
+[2025-05-13T11:30:42.979Z] Error sending email to rameshkashyap8801@gmail.com:
+Error: queryA EBADNAME info@synero.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19)
+

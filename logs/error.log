@@ -1,0 +1,22 @@
+2025-06-19 13:27:53 ERROR: UPI Callback Error: ReferenceError: Activity is not defined
+    at dynamicUpiCallback (/home/zyloq/api.zyloq.app/src/controller/UserController.js:257:5)
+    at Layer.handle [as handle_request] (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/layer.js:95:5)
+    at /home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:47:12)
+2025-06-19 13:31:39 ERROR: UPI Callback Error: ReferenceError: Activity is not defined
+    at dynamicUpiCallback (/home/zyloq/api.zyloq.app/src/controller/UserController.js:257:5)
+    at Layer.handle [as handle_request] (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/layer.js:95:5)
+    at /home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/zyloq/nodevenv/api.zyloq.app/20/lib/node_modules/express/lib/router/index.js:47:12)
