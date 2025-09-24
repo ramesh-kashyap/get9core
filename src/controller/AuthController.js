@@ -11,23 +11,23 @@ const moment = require('moment');
 
 const register = async (req, res) => {
     try {
-        const { name, email, password, sponsor } = req.body;
+        const { name, email, password, sponsor, otp } = req.body;
         
-        if ( !name  || !email || !password || !sponsor) {
+        if ( !name  || !email || !password || !otp || !sponsor) {
             return res.status(400).json({ error: "All fields are required!" });
         }
 
-        // const [otpRecord] = await sequelize.query(
-        //   'SELECT * FROM password_resets WHERE email = ? AND token = ? ORDER BY created_at DESC LIMIT 1',
-        //   {
-        //     replacements: [email, verificationCode],
-        //     type: sequelize.QueryTypes.SELECT
-        //   }
-        // );
+        const [otpRecord] = await sequelize.query(
+          'SELECT * FROM password_resets WHERE email = ? AND token = ? ORDER BY created_at DESC LIMIT 1',
+          {
+            replacements: [email, otp],
+            type: sequelize.QueryTypes.SELECT
+          }
+        );
     
-        // if (!otpRecord) {
-        //   return res.status(400).json({ message: "Invalid or expired verification code!" });
-        // }
+        if (!otpRecord) {
+          return res.status(400).json({ message: "Invalid or expired verification code!" });
+        }
 
   
         const existingUser = await User.findOne({where: { email: email } });
