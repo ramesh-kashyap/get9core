@@ -10,7 +10,6 @@ const {sendEmail,sendEmailRegister } = require("../services/userService");
 const moment = require('moment');
 
 const register = async (req, res) => {
-  console.log(req.body);
     try {
         const { name, email, password, sponsor } = req.body;
         
