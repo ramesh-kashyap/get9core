@@ -1334,70 +1334,45 @@ function getNewDetailChangedDate(detailChangedDate,hours) {
 }
 
 
-const ChangePassword = async (req, res) => {
-  try {
-    const { password, password_confirmation, verification_code } = req.body;
-
-    if (!password || !password_confirmation || !verification_code) {
-      return res.status(400).json({ message: "All fields are required!" });
-    }
-
-    if (password !== password_confirmation) {
-      return res.status(400).json({ message: "Passwords do not match!" });
-    }
-
-    // Step 1: Get OTP record from password_resets table
-    const [otpRecord] = await sequelize.query(
-      'SELECT * FROM password_resets WHERE token = ? ORDER BY created_at DESC LIMIT 1',
-      {
-        replacements: [verification_code],
-        type: sequelize.QueryTypes.SELECT
+const changePassword = async (req, res) => {
+    try {
+      const { email, password, password_confirmation } = req.body;
+  console.log("password",password);
+      if (!email || !password || !password_confirmation) {
+        return res.status(400).json({ message: "All fields are required!" });
       }
-    );
-
-    if (!otpRecord) {
-      return res.status(404).json({ message: "Invalid or expired verification code!" });
-    }
-
-    // Step 2: Get user using email from OTP record
-    const user = await User.findOne({ where: { email: otpRecord.email } });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found!" });
-    }
-
-    const detailChangedDate = getNewDetailChangedDate(user.detail_changed_date,24);
-
-    // Step 3: Hash and update password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
-    user.PSR = password;
-    user.detail_changed_date = detailChangedDate;
-    await user.save();
-
-    // Step 4: Delete the used token from password_resets table
-    await sequelize.query(
-      'DELETE FROM password_resets WHERE token = ?',
-      {
-        replacements: [verification_code],
-        type: sequelize.QueryTypes.DELETE
+  
+      if (password !== password_confirmation) {
+        return res.status(400).json({ message: "Passwords do not match!" });
       }
-    );
-
-    const userId = user.id;
-    const title = "Welcome To Notifiction";
-    const message = "Login password change Successfully";
-      addNotification(userId, title,message);
-    return res.status(200).json({
-      success: true,
-      message: "Password changed successfully!"
-    });
-
-  } catch (error) {
-    console.error("Change password error:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
+  
+     
+  
+      
+  
+      const user = await User.findOne({ where: { email } });
+  
+      if (!user) {
+        return res.status(404).json({ message: "User not found!" });
+      }
+  
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+      user.PSR = password;
+      await user.save();
+  
+     
+  
+      return res.status(200).json({
+        success: true,
+        message: "Password Change successfully!"
+      });
+  
+    } catch (error) {
+      console.error("Change password error:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
 
 // get user details 
 const getUserDetails = async (req, res) => {
@@ -1955,4 +1930,4 @@ const qualityLevelTeam = async (userId, level = 3) => {
   }
 };
 
-module.exports = {botActivate, levelTeam,get_comm, direcTeam ,fetchwallet, dynamicUpiCallback, changedetails,available_balance, withfatch, withreq, sendotp,processWithdrawal, fetchserver, submitserver, getAvailableBalance, fetchrenew, renewserver, fetchservers, sendtrade, runingtrade, serverc, tradeinc ,InvestHistory, withdrawHistory, ChangePassword,saveWalletAddress,getUserDetails,PaymentPassword,totalRef, quality, fetchvip, myqualityTeam, fetchnotice,incomeInfo,checkUsers,claimTask,checkClaimed,ClaimVip,vipTerms};
+module.exports = {botActivate, levelTeam,get_comm, direcTeam ,fetchwallet, dynamicUpiCallback, changedetails,available_balance, withfatch, withreq, sendotp,processWithdrawal, fetchserver, submitserver, getAvailableBalance, fetchrenew, renewserver, fetchservers, sendtrade, runingtrade, serverc, tradeinc ,InvestHistory, withdrawHistory, changePassword,saveWalletAddress,getUserDetails,PaymentPassword,totalRef, quality, fetchvip, myqualityTeam, fetchnotice,incomeInfo,checkUsers,claimTask,checkClaimed,ClaimVip,vipTerms};
