@@ -133,8 +133,11 @@ return res.status(201).json({ message: "User registered successfully!", username
 
 
 const login = async (req, res) => {
+          console.log("ji");
 
     try {
+          console.log("email");
+
       // Destructure username and password from the request body.
       const { email, password } = req.body;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
