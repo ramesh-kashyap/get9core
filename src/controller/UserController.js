@@ -372,7 +372,7 @@ const fetchwallet = async (req, res) => {
       ) &&
       queryData.result === "sent" &&
       (
-        queryData.coin === 'bep20_usdt' ||
+        queryData.coin === 'bep20_usdt' || 
         queryData.coin === 'trc20_usdt'
       )
     ){
@@ -389,7 +389,7 @@ const fetchwallet = async (req, res) => {
    
         const user = await User.findOne({ where: { username:userName } });
         // insert investment
-
+     
         const now = new Date();
         const invoice = Math.floor(1000000 + Math.random() * 9000000).toString();
         // Insert into database using Sequelize
@@ -476,7 +476,10 @@ const fetchwallet = async (req, res) => {
   };
   const Cwithdarw = async (req, res) => {
     const { amount, currency, network, wallet } = req.body;
-  
+        console.log(req.body);
+       if(!amount || !currency || !network || !wallet){
+        return res.status(200).json({success: false, message: "All fields are required!" });
+       }
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -532,6 +535,7 @@ const fetchwallet = async (req, res) => {
     }
   };
   
+
   const withreq = async (req, res) => { 
     try {
       const userId = req.user?.id;
@@ -1160,7 +1164,9 @@ const fetchrenew = async (req, res) => {
  const saveWalletAddress = async (req, res) => {
   try {
     const userId = req.user?.id;
-    const { address, verificationCode, networkType } = req.body;
+      const { address } = req.body;
+    const networkType = req.params.networkType; // ✅ Corrected
+
 
     if (!userId) {
       return res.status(401).json({ message: "User not authenticated!" });
@@ -1172,28 +1178,28 @@ const fetchrenew = async (req, res) => {
     }
 
     // Verify OTP from password_resets table
-    const [otpRecord] = await sequelize.query(
-      'SELECT * FROM password_resets WHERE email = ? AND token = ? ORDER BY created_at DESC LIMIT 1',
-      {
-        replacements: [user.email, verificationCode],
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+    // const [otpRecord] = await sequelize.query(
+    //   'SELECT * FROM password_resets WHERE email = ? AND token = ? ORDER BY created_at DESC LIMIT 1',
+    //   {
+    //     replacements: [user.email, verificationCode],
+    //     type: sequelize.QueryTypes.SELECT
+    //   }
+    // );
 
-    if (!otpRecord) {
-      return res.status(400).json({ message: "Invalid or expired verification code!" });
-    }
+    // if (!otpRecord) {
+    //   return res.status(400).json({ message: "Invalid or expired verification code!" });
+    // }
 
     const type = networkType?.toLowerCase().trim();
+    
     
      // Current date + 36 hours
     //   const detailChangedDate = moment().add(36, 'hours').format('YYYY-MM-DD HH:mm:ss');
       const detailChangedDate = getNewDetailChangedDate(user.detail_changed_date,36);
-
     // Compare current address with saved one
     if (type === "bep20") {
       if (user.usdtBep20 === address) {
-        return res.status(200).json({ message: "This ERC20 address is already saved.", alreadySaved: true });
+        return res.status(200).json({ message: "This bep20 address is already saved.", alreadySaved: true });
       }
       
          // Update detail_changed_date only if address was previously not empty and is changing
@@ -1227,6 +1233,34 @@ const fetchrenew = async (req, res) => {
   }
 };
 
+const fetchWalletAddress = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated!" });
+    }
+
+    const user = await User.findOne({
+      where: { id: userId },
+      attributes: ['usdtTrc20', 'usdtBep20'], // fetch only the needed fields
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found!" });
+    }
+
+    return res.status(200).json({
+      trc20: user.usdtTrc20 || '',
+      bep20: user.usdtBep20 || '',
+    });
+
+  } catch (error) {
+    console.error("Error fetching wallet addresses:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
 
 const InvestHistory = async (req, res) => {
   try {
@@ -1239,7 +1273,7 @@ const InvestHistory = async (req, res) => {
       where: { user_id: userId }, // Filter by user_id (logged-in user's ID)
       order: [['created_at', 'DESC']], // Optional: Order investments by most recent first 1
     });
-    // console.log("i am sach",buy_funds);
+    console.log("i am sach",buy_funds);
     if (!buy_funds) {
       return res.status(404).json({ message: "No investments found for this user!" });
     }
@@ -1955,4 +1989,15 @@ const qualityLevelTeam = async (userId, level = 3) => {
   }
 };
 
-module.exports = {botActivate, levelTeam,get_comm, direcTeam ,fetchwallet, dynamicUpiCallback, changedetails,available_balance, withfatch, withreq, sendotp,processWithdrawal, fetchserver, submitserver, getAvailableBalance, fetchrenew, renewserver, fetchservers, sendtrade, runingtrade, serverc, tradeinc ,InvestHistory, withdrawHistory, ChangePassword,saveWalletAddress,getUserDetails,PaymentPassword,totalRef, quality, fetchvip, myqualityTeam, fetchnotice,incomeInfo,checkUsers,claimTask,checkClaimed,ClaimVip,vipTerms};
+module.exports = {botActivate, levelTeam,get_comm, direcTeam ,fetchwallet, dynamicUpiCallback, changedetails,available_balance, withfatch, withreq, sendotp,processWithdrawal, fetchserver, submitserver, getAvailableBalance, fetchrenew, renewserver, fetchservers, sendtrade, runingtrade, serverc, tradeinc ,InvestHistory, withdrawHistory, ChangePassword,saveWalletAddress,getUserDetails,PaymentPassword,totalRef, quality, fetchvip, myqualityTeam, fetchnotice,incomeInfo,checkUsers,claimTask,checkClaimed,ClaimVip,vipTerms,fetchWalletAddress,Cwithdarw};
+
+
+
+
+
+
+
+
+
+
+
