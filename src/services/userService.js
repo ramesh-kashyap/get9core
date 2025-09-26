@@ -2,10 +2,10 @@ const { User, Investment,Income,Withdraw,Machine} = require("../models"); // Adj
 const { Op } = require("sequelize"); // ✅ Import Sequelize Operators
 const nodemailer = require("nodemailer");
 const BuyFund = require("../models/BuyFunds");
-
+const sequelize = require('../config/connectDB');
 // Get user's VIP level
 
-async function getVip(userId) {
+async function getVip1(userId) {
     try {
         const user = await User.findByPk(userId);
         if (!user) return 0;
@@ -60,6 +60,130 @@ async function getVip(userId) {
         return 0;
     }
 }
+
+const getTeamCounts = async (userId, level = 3) => {
+  let arrin = [userId];
+  let ret = {};
+  let i = 1;
+
+  while (arrin.length > 0 && i <= level) {
+    const allDown = await User.findAll({
+      attributes: ["id", "active_status"],
+      where: { sponsor: { [Op.in]: arrin } },
+    });
+
+    if (allDown.length === 0) break;
+    arrin = allDown.map((user) => user.id);
+    ret[i] = allDown;
+    i++;
+  }
+
+  const teamA = (ret[1] || []).filter((u) => u.active_status === "Active");
+  const teamB = (ret[2] || []).filter((u) => u.active_status === "Active");
+  const teamC = (ret[3] || []).filter((u) => u.active_status === "Active");
+
+  return {
+    teamA: teamA.length,
+    teamB: teamB.length,
+    teamC: teamC.length,
+  };
+};
+
+const getTeamPerformance = async (userId, level = 3, startDate, endDate) => {
+  let arrin = [userId];
+  let totalInvestment = 0;
+  let i = 1;
+
+  while (arrin.length > 0 && i <= level) {
+    const allDown = await User.findAll({
+      attributes: ["id"],
+      where: { sponsor: { [Op.in]: arrin } },
+    });
+    if (allDown.length === 0) break;
+    arrin = allDown.map((user) => user.id);
+
+    const investments = await Investment.findAll({
+      attributes: [[sequelize.fn("SUM", sequelize.col("amount")), "total"]],
+      where: {
+        user_id: { [Op.in]: arrin },
+        created_at: { [Op.between]: [startDate, endDate] },
+      },
+      raw: true,
+    });
+
+    totalInvestment += parseFloat(investments[0].total || 0);
+    console.log("totalInvestment",totalInvestment);
+    i++;
+  }
+
+  return totalInvestment;
+};
+
+const getVip = async (userId) => {
+  const firstInvestment = await Investment.findOne({
+    where: { user_id: userId },
+    order: [["created_at", "ASC"]],
+  });
+
+  if (!firstInvestment) return null;
+
+  const startDate = new Date(firstInvestment.created_at);
+  const now = new Date();
+
+  // Total user investment
+  const totalUserInvestment =
+    (await Investment.sum("amount", {
+      where: {
+        user_id: userId,
+        created_at: { [Op.between]: [startDate, now] },
+      },
+    })) || 0;
+
+  // Team counts
+  const team = await getTeamCounts(userId, 3);
+
+  // Team performance
+  const teamPerformance = await getTeamPerformance(userId, 3, startDate, now);
+
+  // VIP levels config
+  const vipLevels = [
+    { name: "VIP 1", investMin: 50, investMax: 500, teamA: 0, teamB: 0, teamC: 0, perfMin: 0, days: 30 },
+    { name: "VIP 2", investMin: 300, investMax: 1500, teamA: 2, teamB: 1, teamC: 0, perfMin: 1000, days: 45 },
+    { name: "VIP 3", investMin: 800, investMax: 3000, teamA: 5, teamB: 3, teamC: 1, perfMin: 5000, days: 60 },
+    { name: "VIP 4", investMin: 1500, investMax: 5000, teamA: 10, teamB: 6, teamC: 3, perfMin: 15000, days: 75 },
+    { name: "VIP 5", investMin: 3000, investMax: 10000, teamA: 20, teamB: 12, teamC: 6, perfMin: 50000, days: 90 },
+    { name: "VIP 6", investMin: 5000, investMax: 20000, teamA: 30, teamB: 18, teamC: 8, perfMin: 100000, days: 120 },
+    { name: "VIP 7", investMin: 10000, investMax: 50000, teamA: 50, teamB: 30, teamC: 15, perfMin: 200000, days: 180 },
+  ];
+
+  let latestVip = null;
+
+  for (const vip of vipLevels) {
+    // Check investment condition
+    const investOk =
+      totalUserInvestment >= vip.investMin &&
+      totalUserInvestment <= vip.investMax;
+
+    // Check team condition
+    const teamOk =
+      team.teamA >= vip.teamA &&
+      team.teamB >= vip.teamB &&
+      team.teamC >= vip.teamC;
+
+    // Check performance condition
+    const perfOk = teamPerformance >= vip.perfMin;
+
+    // Check days condition
+    const daysUsed = (now - startDate) / (1000 * 60 * 60 * 24);
+    const daysOk = daysUsed <= vip.days;
+
+    if (investOk && teamOk && perfOk && daysOk) {
+      latestVip = vip.name; // overwrite with higher VIP if matched
+    }
+  }
+
+  return latestVip;
+};
 
 // Get user's level team count (downline up to 'level' generations)
 async function myLevelTeamCount(userId, level = 3) {

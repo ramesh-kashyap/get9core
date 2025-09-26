@@ -49,8 +49,7 @@ router.get('/fetchrenew', authMiddleware, UserController.fetchrenew);
 router.post('/renew-server', authMiddleware, UserController.renewserver);
 router.get('/investments', authMiddleware, UserController.InvestHistory);
 router.get('/withdraw-history', authMiddleware, UserController.withdrawHistory);
-router.post('/changePassword', authMiddleware, UserController.ChangePassword);
-router.post('/changePassword', authMiddleware, UserController.ChangePassword);
+router.post('/changePassword', authMiddleware, UserController.changePassword);
 router.get('/fetchservers', authMiddleware, UserController.fetchservers);
 router.post('/changedetails', authMiddleware, UserController.changedetails);
 router.get('/checkusers', authMiddleware, UserController.checkUsers);
@@ -58,6 +57,8 @@ router.post('/claimTask', authMiddleware, UserController.claimTask);
 router.get('/checkClaimed', authMiddleware,UserController.checkClaimed);
 router.get('/vipterms', authMiddleware, UserController.vipTerms);
 router.post('/claimVip', authMiddleware, UserController.ClaimVip);
+
+router.get('/checkVIPLevel', authMiddleware, UserController.checkVIPLevel);
 
 router.get('/getUserHistory', authMiddleware, transactionController.getUserHistory);
 
@@ -74,7 +75,6 @@ router.get('/totalRef', authMiddleware, UserController.totalRef);
 router.post('/ChangeMail', authMiddleware,authController.changeMail);
  
 
-router.post('/txnPassword',  UserController.ChangePassword);
 
 router.post('/sendnotice', authMiddleware, Helper.addNotification);
 router.get('/fetchnotice', authMiddleware, UserController.fetchnotice);
