@@ -56,6 +56,8 @@ router.get('/checkClaimed', authMiddleware,UserController.checkClaimed);
 router.get('/vipterms', authMiddleware, UserController.vipTerms);
 router.post('/claimVip', authMiddleware, UserController.ClaimVip);
 
+router.get('/checkVIPLevel', authMiddleware, UserController.checkVIPLevel);
+
 router.get('/getUserHistory', authMiddleware, transactionController.getUserHistory);
 
 router.post('/sendtrade', authMiddleware, UserController.sendtrade);

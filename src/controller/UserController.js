@@ -18,7 +18,6 @@ const { getBalance ,sendEmail } = require("../services/userService");
 const moment = require('moment');
 const { Op } = require('sequelize');
 const logger = require("../../utils/logger");
-
 const available_balance = async (req, res) => {
     try {
       const userId = req.user?.id;
@@ -1930,4 +1929,247 @@ const qualityLevelTeam = async (userId, level = 3) => {
   }
 };
 
-module.exports = {botActivate, levelTeam,get_comm, direcTeam ,fetchwallet, dynamicUpiCallback, changedetails,available_balance, withfatch, withreq, sendotp,processWithdrawal, fetchserver, submitserver, getAvailableBalance, fetchrenew, renewserver, fetchservers, sendtrade, runingtrade, serverc, tradeinc ,InvestHistory, withdrawHistory, changePassword,saveWalletAddress,getUserDetails,PaymentPassword,totalRef, quality, fetchvip, myqualityTeam, fetchnotice,incomeInfo,checkUsers,claimTask,checkClaimed,ClaimVip,vipTerms};
+
+
+// ================= TEAM COUNTS =================
+const getTeamCounts = async (userId, level = 3) => {
+  let arrin = [userId];
+  let ret = {};
+  let i = 1;
+
+  while (arrin.length > 0 && i <= level) {
+    const allDown = await User.findAll({
+      attributes: ["id", "active_status"],
+      where: { sponsor: { [Op.in]: arrin } },
+    });
+
+    if (allDown.length === 0) break;
+    arrin = allDown.map((user) => user.id);
+    ret[i] = allDown;
+    i++;
+  }
+
+  const teamA = (ret[1] || []).filter((u) => u.active_status === "Active");
+  const teamB = (ret[2] || []).filter((u) => u.active_status === "Active");
+  const teamC = (ret[3] || []).filter((u) => u.active_status === "Active");
+
+  return {
+    teamA: teamA.length,
+    teamB: teamB.length,
+    teamC: teamC.length,
+  };
+};
+
+const getTeamPerformance = async (userId, level = 3, startDate, endDate) => {
+  let arrin = [userId];
+  let totalInvestment = 0;
+  let i = 1;
+
+  while (arrin.length > 0 && i <= level) {
+    const allDown = await User.findAll({
+      attributes: ["id"],
+      where: { sponsor: { [Op.in]: arrin } },
+    });
+    if (allDown.length === 0) break;
+    arrin = allDown.map((user) => user.id);
+
+    const investments = await Investment.findAll({
+      attributes: [[sequelize.fn("SUM", sequelize.col("amount")), "total"]],
+      where: {
+        user_id: { [Op.in]: arrin },
+        created_at: { [Op.between]: [startDate, endDate] },
+      },
+      raw: true,
+    });
+
+    totalInvestment += parseFloat(investments[0].total || 0);
+    console.log("totalInvestment",totalInvestment);
+    i++;
+  }
+
+  return totalInvestment;
+};
+
+// ================= VIP CHECK WITH PERCENTAGE =================
+const checkVIPLevel = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    console.log("userId", userId);
+
+    const firstInvestment = await Investment.findOne({
+      where: { user_id: userId },
+      order: [["created_at", "ASC"]],
+    });
+    console.log("firstInvestment", firstInvestment);
+
+    if (!firstInvestment) {
+      return res.json({ message: "No investment found" });
+    }
+
+    const startDate = new Date(firstInvestment.created_at);
+    const now = new Date();
+
+    // Total user investment
+    const totalUserInvestment =
+      (await Investment.sum("amount", {
+        where: {
+          user_id: userId,
+          created_at: { [Op.between]: [startDate, now] },
+        },
+      })) || 0;
+    console.log("totalUserInvestment", totalUserInvestment);
+
+    // Team counts
+    const team = await getTeamCounts(userId, 3);
+
+    // Team performance
+    const teamPerformance = await getTeamPerformance(userId, 3, startDate, now);
+
+    // ================= VIP CONDITIONS =================
+    const vipLevels = [
+      {
+        name: "VIP1",
+        investMin: 50,
+        investMax: 500,
+        teamA: 0,
+        teamB: 0,
+        teamC: 0,
+        perfMin: 0,
+        days: 30,
+      },
+      {
+        name: "VIP2",
+        investMin: 300,
+        investMax: 1500,
+        teamA: 2,
+        teamB: 1,
+        teamC: 0,
+        perfMin: 1000,
+        days: 45,
+      },
+      {
+        name: "VIP3",
+        investMin: 800,
+        investMax: 3000,
+        teamA: 5,
+        teamB: 3,
+        teamC: 1,
+        perfMin: 5000,
+        days: 60,
+      },
+      {
+        name: "VIP4",
+        investMin: 1500,
+        investMax: 5000,
+        teamA: 10,
+        teamB: 6,
+        teamC: 3,
+        perfMin: 15000,
+        days: 75,
+      },
+      {
+        name: "VIP5",
+        investMin: 3000,
+        investMax: 10000,
+        teamA: 20,
+        teamB: 12,
+        teamC: 6,
+        perfMin: 50000,
+        days: 90,
+      },
+      {
+        name: "VIP6",
+        investMin: 5000,
+        investMax: 20000,
+        teamA: 30,
+        teamB: 18,
+        teamC: 8,
+        perfMin: 100000,
+        days: 120,
+      },
+      {
+        name: "VIP7",
+        investMin: 10000,
+        investMax: 50000,
+        teamA: 50,
+        teamB: 30,
+        teamC: 15,
+        perfMin: 200000,
+        days: 180,
+      },
+    ];
+
+    const results = [];
+
+    vipLevels.forEach((vip) => {
+      // Investment %
+      let investPercent = 0;
+      if (totalUserInvestment >= vip.investMin) {
+        investPercent = Math.min(
+          100,
+          (totalUserInvestment / vip.investMax) * 100
+        );
+      }
+
+      // Team %
+      const teamPercents = [];
+      if (vip.teamA)
+        teamPercents.push(
+          Math.min(100, (team.teamA / vip.teamA) * 100)
+        );
+      if (vip.teamB)
+        teamPercents.push(
+          Math.min(100, (team.teamB / vip.teamB) * 100)
+        );
+      if (vip.teamC)
+        teamPercents.push(
+          Math.min(100, (team.teamC / vip.teamC) * 100)
+        );
+
+      const teamPercent =
+        teamPercents.length > 0
+          ? Math.floor(
+              teamPercents.reduce((a, b) => a + b, 0) / teamPercents.length
+            )
+          : 100;
+
+      // Performance %
+      const perfPercent = vip.perfMin
+        ? Math.min(100, (teamPerformance / vip.perfMin) * 100)
+        : 100;
+
+      // Days %
+     const daysUsed = (now - startDate) / (1000 * 60 * 60 * 24);
+        const daysValid = daysUsed <= vip.days;
+if (!daysValid) {
+  overallPercent = 0;
+}
+      // Overall %
+    let overallPercent = Math.floor(
+  (investPercent + teamPercent + perfPercent) / 3
+);
+      results.push({
+        vip: vip.name,
+        investPercent: Math.floor(investPercent),
+        teamPercent,
+        perfPercent: Math.floor(perfPercent),
+        overallPercent,
+      });
+    });
+
+    return res.json({
+      totalUserInvestment,
+      team,
+      teamPerformance,
+      vipProgress: results,
+    });
+  } catch (error) {
+    console.error("Error in checkVIPLevel:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+
+module.exports = {botActivate,checkVIPLevel, levelTeam,get_comm, direcTeam ,fetchwallet, dynamicUpiCallback, changedetails,available_balance, withfatch, withreq, sendotp,processWithdrawal, fetchserver, submitserver, getAvailableBalance, fetchrenew, renewserver, fetchservers, sendtrade, runingtrade, serverc, tradeinc ,InvestHistory, withdrawHistory, changePassword,saveWalletAddress,getUserDetails,PaymentPassword,totalRef, quality, fetchvip, myqualityTeam, fetchnotice,incomeInfo,checkUsers,claimTask,checkClaimed,ClaimVip,vipTerms};

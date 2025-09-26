@@ -16,24 +16,29 @@ const { getVip,getBalance,addLevelIncome,getQuantifition} = require("../services
 
 
 
+
 const get_vip = async (req, res) => { 
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(200).json({success: false, message: "User not authenticated!" });
-      }  
-      const user = await User.findOne({ where: { id: userId } });
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(200).json({ success: false, message: "User not authenticated!" });
+    }  
+    const user = await User.findOne({ where: { id: userId } });
       if (!user) {
         return res.status(200).json({success: false, message: "User not found!" });
       } 
-      const vip = await getVip(userId);
-    
-      return res.status(200).json({success: true, vip: vip});
-    } catch (error) {
-      console.error("Something went wrong:", error);
-      return res.status(200).json({success: false, message: "Internal Server Error" });
+    const vip = await getVip(userId);
+
+    if (!vip) {
+      return res.status(200).json({ success: true, vip: "No VIP" });
     }
-  };
+
+      return res.status(200).json({success: true, vip: vip});
+  } catch (error) {
+    console.error("Something went wrong:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
 
 
 
